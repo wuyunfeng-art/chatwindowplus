@@ -30,6 +30,13 @@ public final class ChatWindowConfig {
 
     /** 未打开聊天时保留的行数（0 表示不显示悬浮聊天栏）。 */
     public int hudMaxLines = 8;
+    /**
+     * 常驻聊天栏的淡出：最后一条消息（或关闭聊天）之后保持多少个 tick 再开始淡出，
+     * 20 tick = 1 秒；设为 -1 表示常驻不淡出。
+     */
+    public int hudFadeDelayTicks = 200;
+    /** 淡出过程持续的 tick 数，40 tick = 2 秒。 */
+    public int hudFadeTicks = 40;
     /** 打开聊天时最多展示的行数。 */
     public int openMaxLines = 40;
 
@@ -156,6 +163,8 @@ public final class ChatWindowConfig {
         this.minPanelWidth = o.minPanelWidth;
         this.maxPanelWidth = o.maxPanelWidth;
         this.hudMaxLines = o.hudMaxLines;
+        this.hudFadeDelayTicks = o.hudFadeDelayTicks;
+        this.hudFadeTicks = o.hudFadeTicks;
         this.openMaxLines = o.openMaxLines;
         this.openHeightRatio = o.openHeightRatio;
         this.hudPanelOpacity = o.hudPanelOpacity;

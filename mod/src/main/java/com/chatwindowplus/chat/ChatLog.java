@@ -28,6 +28,7 @@ public final class ChatLog {
         }
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
+        ChatWindowPlus.noteActivity();
         ChatEntry entry = new ChatEntry(
                 this.nextId++,
                 parsed.category(),

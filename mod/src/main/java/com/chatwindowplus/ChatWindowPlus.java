@@ -35,6 +35,11 @@ public final class ChatWindowPlus implements ClientModInitializer {
     private long configStamp;
     private boolean dirty;
 
+    /** 最后一次「有动静」时的 tick：收到消息或打开聊天时刷新，常驻栏据此淡出。 */
+    private int lastActivityTick;
+    /** 客户端 tick 计数，和渲染线程无关，专门给淡出计时用。 */
+    private int ticks;
+
     private KeyBinding settingsKey;
 
     @Override
@@ -52,6 +57,7 @@ public final class ChatWindowPlus implements ClientModInitializer {
                 KeyBinding.Category.create(Identifier.of(MOD_ID, "settings"))));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            this.ticks++;
             while (this.settingsKey.wasPressed()) {
                 client.setScreen(new ChatSettingsScreen());
             }
@@ -81,6 +87,21 @@ public final class ChatWindowPlus implements ClientModInitializer {
 
     public static ChatLog log() {
         return instance == null ? new ChatLog() : instance.chatLog;
+    }
+
+    /** 收到消息或打开聊天时调用，重置常驻栏的淡出计时。 */
+    public static void noteActivity() {
+        if (instance != null) {
+            instance.lastActivityTick = instance.ticks;
+        }
+    }
+
+    public static int lastActivityTick() {
+        return instance == null ? 0 : instance.lastActivityTick;
+    }
+
+    public static int ticks() {
+        return instance == null ? 0 : instance.ticks;
     }
 
     /** 设置界面改动后调用：稍后自动落盘。 */

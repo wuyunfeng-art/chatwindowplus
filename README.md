@@ -4,7 +4,7 @@
 重做成带 **分类色签、筛选页签、滚动历史、圆角输入框** 的聊天窗口，并且可以在游戏内直接调位置、
 大小、透明度、颜色和风格。
 
-> 当前版本 **1.0.3**（Minecraft 1.21.11 / Fabric）· 改动记录见 [CHANGELOG.md](CHANGELOG.md)
+> 当前版本 **1.0.4**（Minecraft 1.21.11 / Fabric）· 改动记录见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -30,7 +30,7 @@
 2. **按 `F7`** 打开「聊天窗口设置」，改完点「完成」即可（也会自动保存）。
 3. 也可以打开聊天后点页签行最右侧的 **「设置」**，或者输入 **`/cwp`**。
 
-> 把 `chatwindowplus-1.0.3.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
+> 把 `chatwindowplus-1.0.4.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
 > 换新版本后需要**重启一次游戏**才会加载。
 
 ---
@@ -122,6 +122,8 @@
 | `openHeightRatio`                      | `0.44`                            | 打开时面板高度占屏幕比例上限                                                                           |
 | `openMaxLines`                         | `40`                              | 打开时行数硬上限（实际还受 `openHeightRatio` 限制）                                                      |
 | `hudMaxLines`                          | `8`                               | 常驻聊天栏行数                                                                                  |
+| `hudFadeDelayTicks`                    | `200`                             | 关闭聊天后常驻栏保持多久再开始淡出（20 tick = 1 秒；`-1` = 常驻不淡出）                                                |
+| `hudFadeTicks`                         | `40`                              | 淡出持续的 tick 数（40 tick = 2 秒）                                                               |
 | `hudPanelOpacity` / `openPanelOpacity` | `0.40`                            | 背景不透明度（`0.4` = 40% 不透明）                                                                  |
 | `panelOffsetX` / `panelOffsetY`        | `4` / `14`                        | 距左边 / 距底部的像素                                                                             |
 | `cornerRadius`                         | `5`                               | 圆角（切角主题下为 2px 切角）                                                                        |
@@ -177,8 +179,8 @@
 ## 四、安装 / 更新
 
 1. 游戏版本 **Fabric 1.21.11**，需要 **Fabric Loader 0.19+** 与 **Fabric API**。
-2. 下载 [`chatwindowplus-1.0.3.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.3.jar)
-   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.3.jar`）。
+2. 下载 [`chatwindowplus-1.0.4.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.4.jar)
+   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.4.jar`）。
 3. 放进整合包的 `.minecraft/versions/<你的版本>/mods/` 目录。
 4. 重启游戏。
 
@@ -200,7 +202,7 @@
 cd mod
 $env:JAVA_HOME = "..\tools\jdk25\jdk-25"
 ..\tools\gradle-9.9.2\bin\gradle.bat build
-# 产物：build/libs/chatwindowplus-1.0.3.jar
+# 产物：build/libs/chatwindowplus-1.0.4.jar
 ```
 
 技术栈：Fabric Loom 1.19.4、Yarn 1.21.11+build.6、JDK 25 编译（字节码 21）。
@@ -223,7 +225,7 @@ mod/src/main/java/com/chatwindowplus/
   mixin/                    聊天界面 Mixin
   ui/                       渲染、主题、设置界面
 docs/                       README 用截图
-dist/                       已构建的 jar（chatwindowplus-1.0.3.jar）
+dist/                       已构建的 jar（chatwindowplus-1.0.4.jar）
 CHANGELOG.md                版本改动记录
 ```
 

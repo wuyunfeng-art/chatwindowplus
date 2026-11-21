@@ -32,6 +32,28 @@ public final class ChatWindowRenderer {
     private ChatWindowRenderer() {
     }
 
+    /**
+     * 常驻聊天栏的可见度：最后一条消息（或最后一次打开聊天）之后先保持
+     * {@code hudFadeDelayTicks}，再用 {@code hudFadeTicks} 线性淡出到 0。
+     * 打开聊天、收到新消息都会重置计时，所以按 T 唤出时立刻恢复满不透明度。
+     */
+    private static float hudFade() {
+        var config = ChatWindowPlus.config();
+        int hold = config.hudFadeDelayTicks;
+        if (hold < 0) {
+            return 1.0F;
+        }
+        int fade = Math.max(1, config.hudFadeTicks);
+        int elapsed = ChatWindowPlus.ticks() - ChatWindowPlus.lastActivityTick();
+        if (elapsed <= hold) {
+            return 1.0F;
+        }
+        if (elapsed >= hold + fade) {
+            return 0.0F;
+        }
+        return 1.0F - (elapsed - hold) / (float) fade;
+    }
+
     public record Tab(ChatCategory category, int x, int y, int w, int h) {
         public boolean contains(double mouseX, double mouseY) {
             return mouseX >= this.x && mouseX < this.x + this.w && mouseY >= this.y && mouseY < this.y + this.h;
@@ -139,6 +161,15 @@ public final class ChatWindowRenderer {
             return;
         }
 
+        // 打开聊天时每一帧都在续期；关闭后交给 hudFade 决定“保持 → 淡出 → 隐藏”
+        if (open) {
+            ChatWindowPlus.noteActivity();
+        }
+        float fade = open ? 1.0F : hudFade();
+        if (!open && fade <= 0.01F) {
+            return;
+        }
+
         ChatLayout layout = layout(font, context.getScaledWindowWidth(), context.getScaledWindowHeight(), open);
         List<ChatEntry> entries = ChatWindowPlus.log().filtered(filter);
         List<Row> rows = buildRows(font, entries, layout.textW());
@@ -157,8 +188,8 @@ public final class ChatWindowRenderer {
         }
 
         double opacity = open ? config.openPanelOpacity : config.hudPanelOpacity;
-        float alpha = (float) opacity;
-        int border = Theme.withAlpha(Theme.PANEL_BORDER, Math.max(0.35F, alpha));
+        float alpha = (float) opacity * fade;
+        int border = Theme.withAlpha(Theme.PANEL_BORDER, Math.max(0.06F, alpha));
         int radius = MathHelper.clamp(config.cornerRadius, 0, 16);
         UiDraw.shadow(context, layout.panelX(), layout.panelY(), layout.panelW(), layout.panelH(), radius,
                 Theme.withAlpha(0xFF000000, alpha * 0.40F));
@@ -171,9 +202,9 @@ public final class ChatWindowRenderer {
 
         if (rows.isEmpty()) {
             context.drawText(font, "暂无聊天记录", layout.listX() + 6, layout.listBottom() - LINE_HEIGHT - 2,
-                    Theme.TEXT_FAINT, false);
+                    Theme.withAlpha(Theme.TEXT_FAINT, fade), false);
         } else {
-            drawRows(context, font, layout, rows, visibleRows, mouseX, mouseY);
+            drawRows(context, font, layout, rows, visibleRows, mouseX, mouseY, fade);
         }
 
         if (open) {
@@ -304,7 +335,7 @@ public final class ChatWindowRenderer {
     }
 
     private static void drawRows(DrawContext context, TextRenderer font, ChatLayout layout, List<Row> rows,
-                                 int visibleRows, int mouseX, int mouseY) {
+                                 int visibleRows, int mouseX, int mouseY, float fade) {
         int total = rows.size();
         int from = firstVisibleRow(rows, visibleRows, scroll);
         int to = Math.min(total, from + visibleRows);
@@ -318,21 +349,23 @@ public final class ChatWindowRenderer {
         for (int index = to - 1; index >= from; index--) {
             Row row = rows.get(index);
             if (index == hovered) {
-                context.fill(layout.listX(), y, layout.listX() + layout.listW(), y + layout.lineH(), 0x14FFFFFF);
+                context.fill(layout.listX(), y, layout.listX() + layout.listW(), y + layout.lineH(),
+                        Theme.withAlpha(0x14FFFFFF, fade));
             }
             if (row.firstLine()) {
-                drawChip(context, font, row.entry().category(), x, y + 1, layout.chipW());
+                drawChip(context, font, row.entry().category(), x, y + 1, layout.chipW(), fade);
             }
-            context.drawText(font, row.text(), textX, y + 1, 0xFFFFFFFF, false);
+            context.drawText(font, row.text(), textX, y + 1, Theme.withAlpha(0xFFFFFFFF, fade), false);
             y -= layout.lineH();
         }
         context.disableScissor();
     }
 
-    private static void drawChip(DrawContext context, TextRenderer font, ChatCategory category, int x, int y, int width) {
+    private static void drawChip(DrawContext context, TextRenderer font, ChatCategory category, int x, int y, int width,
+                                 float fade) {
         int color = Theme.category(category);
-        UiDraw.roundRect(context, x, y, width - 2, 9, 2, Theme.alpha(color, 0x38));
-        context.drawText(font, category.label(), x + 3, y, color, false);
+        UiDraw.roundRect(context, x, y, width - 2, 9, 2, Theme.alpha(color, (int) (0x38 * fade)));
+        context.drawText(font, category.label(), x + 3, y, Theme.withAlpha(color, fade), false);
     }
 
     /** 页签行最右侧的设置按钮。 */
