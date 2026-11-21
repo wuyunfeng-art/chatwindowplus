@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "chatwindowplus",
+  "version": "${version}",
+  "name": "Chat Window Plus",
+  "description": "重新设计的聊天窗口：分类色签、可筛选页签、清爽排版与滚动历史。",
+  "authors": [
+    "ChatWindowPlus"
+  ],
+  "license": "MIT",
+  "icon": "assets/chatwindowplus/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.chatwindowplus.ChatWindowPlus"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "chatwindowplus.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "chatwindowplus.category.all": "All",
+  "chatwindowplus.category.world": "World",
+  "chatwindowplus.category.nearby": "Local",
+  "chatwindowplus.category.private": "PM",
+  "chatwindowplus.category.system": "System",
+  "chatwindowplus.category.economy": "Trade",
+  "chatwindowplus.category.battle": "Battle",
+  "chatwindowplus.category.other": "Other",
+  "chatwindowplus.input.placeholder": "Type a message…",
+  "chatwindowplus.settings.button": "Gear",
+  "chatwindowplus.settings.title": "Chat Window Settings",
+  "chatwindowplus.settings.hint": "The chat bar on the left previews changes live",
+  "key.chatwindowplus.settings": "Open chat window settings",
+  "key.categories.chatwindowplus.settings": "Chat Window"
+}

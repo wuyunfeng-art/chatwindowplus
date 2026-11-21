@@ -1,0 +1,16 @@
+{
+  "chatwindowplus.category.all": "全部",
+  "chatwindowplus.category.world": "世界",
+  "chatwindowplus.category.nearby": "附近",
+  "chatwindowplus.category.private": "私聊",
+  "chatwindowplus.category.system": "系统",
+  "chatwindowplus.category.economy": "经济",
+  "chatwindowplus.category.battle": "战斗",
+  "chatwindowplus.category.other": "其他",
+  "chatwindowplus.input.placeholder": "输入聊天内容…",
+  "chatwindowplus.settings.button": "设置",
+  "chatwindowplus.settings.title": "聊天窗口设置",
+  "chatwindowplus.settings.hint": "左侧聊天栏会实时预览，改完点“完成”即可",
+  "key.chatwindowplus.settings": "打开聊天窗口设置",
+  "key.categories.chatwindowplus.settings": "聊天窗口"
+}

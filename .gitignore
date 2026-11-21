@@ -1,0 +1,30 @@
+# ---- 构建产物 / 缓存 ----
+build/
+out/
+mod/build/
+mod/.gradle/
+mod/run/
+.gradle/
+*.class
+
+# ---- 本机工具链与测试环境（体积巨大，不入库）----
+tools/
+testserver/
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- IDE / 系统 ----
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 其他 ----
+*.zip
+*.jar
+!dist/*.jar
+!mod/gradle/wrapper/gradle-wrapper.jar
