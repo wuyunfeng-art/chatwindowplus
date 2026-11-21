@@ -173,8 +173,10 @@
 ## 四、安装 / 更新
 
 1. 游戏版本 **Fabric 1.21.11**，需要 **Fabric Loader 0.19+** 与 **Fabric API**。
-2. 把 `chatwindowplus-1.0.0.jar` 放进整合包的 `.minecraft/versions/<你的版本>/mods/` 目录。
-3. 重启游戏。
+2. 下载 [`chatwindowplus-1.0.0.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.0.jar)
+   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.0.jar`）。
+3. 放进整合包的 `.minecraft/versions/<你的版本>/mods/` 目录。
+4. 重启游戏。
 
 ---
 
