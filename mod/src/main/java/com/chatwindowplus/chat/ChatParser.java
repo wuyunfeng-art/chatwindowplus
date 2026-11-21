@@ -55,6 +55,17 @@ public final class ChatParser {
      *   <li>“战斗时被…”“被烤得 / 烧得 / 冻成 …”这类自定义死法</li>
      * </ol>
      */
+    /** 商店/拍卖这类控制面板的续行标签，例如「所有者：」「价格：」「商店模式：」。 */
+    private static final Pattern PANEL_LABEL = Pattern.compile(
+            "^(所有者|拥有者|商店模式|模式|价格|单价|总价|数量|库存|余额|位置|坐标|类型|描述|状态|有效期|剩余|折扣|商品|名称|权限|成员|创建时间)\\s*[:：]");
+    /** 面板边框线：+-----+、======、│ │ 之类。 */
+    private static final Pattern PANEL_SEPARATOR = Pattern.compile(
+            "^[\\s+\\-=_─│|┌┐└┘├┤┬┴┼╔╗╚╝║╠╣╦╩╬~]{3,}$");
+    /** 经济频道关键词：出现在前 48 字里就算经济，覆盖商店面板里的裸文本行。 */
+    private static final String[] ECONOMY_WORDS = {
+            "商店", "价格", "出售", "收购", "叫卖", "上架", "摆摊", "库存", "单价", "总价", "折扣", "优惠", "余额"
+    };
+
     private static final Pattern DEATH = Pattern.compile(
             "被[^。！？!?]{0,60}?(?:杀死|杀害|击杀|干掉)"
                     + "|用\\[[^\\]]{1,24}]杀"
@@ -253,7 +264,7 @@ public final class ChatParser {
         if (isPrivateChat(head)) {
             return ChatCategory.PRIVATE;
         }
-        if (head.contains("[交易]") || head.contains("[经济]") || head.contains("[市场]")) {
+        if (head.contains("[交易]") || head.contains("[经济]") || head.contains("[市场]") || isEconomyText(head)) {
             return ChatCategory.ECONOMY;
         }
         if (head.contains("[G]") || s.startsWith("[世界]") || s.startsWith("[全球]")) {
@@ -270,6 +281,30 @@ public final class ChatParser {
             return ChatCategory.SYSTEM;
         }
         return ChatCategory.OTHER;
+    }
+
+    /** 面板字段行（「所有者：」「价格：」这类），通常会跟着上一行同属一个分类。 */
+    public static boolean isPanelLabel(String plain) {
+        return PANEL_LABEL.matcher(plain.trim()).find();
+    }
+
+    /** 商店控制面板这类多行区块的续行（字段行或边框线）。 */
+    public static boolean isPanelContinuation(String plain) {
+        return isPanelLabel(plain) || isPanelSeparator(plain);
+    }
+
+    /** 是否是面板的边框线（用于把上一行的框线回填到当前分类）。 */
+    public static boolean isPanelSeparator(String plain) {
+        return PANEL_SEPARATOR.matcher(plain.trim()).matches();
+    }
+
+    private static boolean isEconomyText(String head) {
+        for (String word : ECONOMY_WORDS) {
+            if (head.contains(word)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

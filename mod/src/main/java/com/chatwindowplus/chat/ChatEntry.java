@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
  * 一条已经解析、排版好的聊天消息。换行结果按可用宽度缓存，避免每帧重复计算。
  */
 public final class ChatEntry {
-    private final ChatCategory category;
+    private ChatCategory category;
     private Text line;
     private final String plain;
     private final String sender;
@@ -42,6 +42,13 @@ public final class ChatEntry {
 
     public ChatCategory category() {
         return this.category;
+    }
+
+    /** 面板续行回填时用：把已经入队的一行改到别的分类。 */
+    public void setCategory(ChatCategory category) {
+        if (category != null) {
+            this.category = category;
+        }
     }
 
     public Text line() {

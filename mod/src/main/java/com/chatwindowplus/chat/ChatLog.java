@@ -23,15 +23,30 @@ public final class ChatLog {
 
     public void add(Text message) {
         ChatParser.Parsed parsed = ChatParser.parse(message);
+        ChatCategory effective = parsed.category();
+        ChatEntry previous = this.entries.peekFirst();
+
+        // 商店控制面板这类多行区块：字段行跟着上一行走；框线只在上一行不是系统提示时才跟随，
+// 这样面板顶部的框线会留给下面的标题行来回填。
+        if (effective == ChatCategory.OTHER && previous != null) {
+            ChatCategory prev = previous.category();
+            if (prev != ChatCategory.OTHER) {
+                if (ChatParser.isPanelLabel(parsed.plain())) {
+                    effective = prev;
+                } else if (ChatParser.isPanelSeparator(parsed.plain()) && prev != ChatCategory.SYSTEM) {
+                    effective = prev;
+                }
+            }
+        }
         if (ChatWindowPlus.config().debugChat) {
-            LOGGER.info("[CWP] {} | {}", parsed.category(), parsed.plain());
+            LOGGER.info("[CWP] {} | {}", effective, parsed.plain());
         }
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
         ChatWindowPlus.noteActivity();
         ChatEntry entry = new ChatEntry(
                 this.nextId++,
-                parsed.category(),
+                effective,
                 parsed.line(),
                 parsed.plain(),
                 parsed.sender() == null ? "" : parsed.sender(),
@@ -40,6 +55,12 @@ public final class ChatLog {
                 System.currentTimeMillis(),
                 tick);
         this.entries.addFirst(entry);
+
+        // 面板顶部的框线在标题出现时还不知道属于哪个分类，这里回填一下。
+        if (effective != ChatCategory.OTHER && previous != null && previous.category() == ChatCategory.OTHER
+                && ChatParser.isPanelSeparator(previous.plain())) {
+            previous.setCategory(effective);
+        }
         int limit = Math.max(50, ChatWindowPlus.config().maxMessages);
         while (this.entries.size() > limit) {
             this.entries.removeLast();

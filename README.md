@@ -4,7 +4,7 @@
 重做成带 **分类色签、筛选页签、滚动历史、圆角输入框** 的聊天窗口，并且可以在游戏内直接调位置、
 大小、透明度、颜色和风格。
 
-> 当前版本 **1.0.5**（Minecraft 1.21.11 / Fabric）· 改动记录见 [CHANGELOG.md](CHANGELOG.md)
+> 当前版本 **1.0.6**（Minecraft 1.21.11 / Fabric）· 改动记录见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -30,7 +30,7 @@
 2. **按 `F7`** 打开「聊天窗口设置」，改完点「完成」即可（也会自动保存）。
 3. 也可以打开聊天后点页签行最右侧的 **「设置」**，或者输入 **`/cwp`**。
 
-> 把 `chatwindowplus-1.0.5.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
+> 把 `chatwindowplus-1.0.6.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
 > 换新版本后需要**重启一次游戏**才会加载。
 
 ---
@@ -166,7 +166,9 @@
 - **私聊**：`[私聊]` `[私信]` `[MSG]` `[PM]` `[DM]` `[tell]`、「悄悄地说」、
   `whispers to you`、`A → 你`、`你 → A`、`A 私聊你`
 - **系统**：`隐秘的声音`、`[系统]`、`[公告]`、`来自XX的声音：…`、加入 / 退出
-- **经济**：`[交易]` / `[经济]` / `[市场]` / `[商店]`
+- **经济**：`[交易]` / `[经济]` / `[市场]` / `[商店]`，或正文含
+  `商店 / 价格 / 出售 / 收购 / 叫卖 / 上架 / 摆摊 / 库存 / 单价 / 总价 / 折扣 / 优惠 / 余额`；
+  商店控制面板这类多行区块的字段行（`所有者：`）和框线会跟着上一行合并到同一分类
 - **战斗**：死亡信息 —— 被…杀死 / 杀害 / 击杀 / 干掉（中间最多 60 字）、`用[武器]杀…`、
   `战斗时被…`，以及熔岩游泳、摔落、刺死、炸死、烧死、淹死、饿死、凋零，
   和「被烤得 / 烧得 / 冻成 / 电死 / 毒死 / 窒息 / 压成 / 绞死 / 劈死 / 咬死 / 扎死 / 捅死」
@@ -179,8 +181,8 @@
 ## 四、安装 / 更新
 
 1. 游戏版本 **Fabric 1.21.11**，需要 **Fabric Loader 0.19+** 与 **Fabric API**。
-2. 下载 [`chatwindowplus-1.0.5.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.5.jar)
-   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.5.jar`）。
+2. 下载 [`chatwindowplus-1.0.6.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.6.jar)
+   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.6.jar`）。
 3. 放进整合包的 `.minecraft/versions/<你的版本>/mods/` 目录。
 4. 重启游戏。
 
@@ -202,7 +204,7 @@
 cd mod
 $env:JAVA_HOME = "..\tools\jdk25\jdk-25"
 ..\tools\gradle-9.9.2\bin\gradle.bat build
-# 产物：build/libs/chatwindowplus-1.0.5.jar
+# 产物：build/libs/chatwindowplus-1.0.6.jar
 ```
 
 技术栈：Fabric Loom 1.19.4、Yarn 1.21.11+build.6、JDK 25 编译（字节码 21）。
@@ -225,7 +227,7 @@ mod/src/main/java/com/chatwindowplus/
   mixin/                    聊天界面 Mixin
   ui/                       渲染、主题、设置界面
 docs/                       README 用截图
-dist/                       已构建的 jar（chatwindowplus-1.0.5.jar）
+dist/                       已构建的 jar（chatwindowplus-1.0.6.jar）
 CHANGELOG.md                版本改动记录
 ```
 
