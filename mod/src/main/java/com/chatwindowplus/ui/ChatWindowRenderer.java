@@ -32,26 +32,40 @@ public final class ChatWindowRenderer {
     private ChatWindowRenderer() {
     }
 
+    private static long lastFadeLogMs;
+    /** 常驻栏是否已经淡出到完全隐藏，用来只在状态翻转时打一条日志。 */
+    private static boolean hudHidden;
+    /** 本轮是否已经打过「开始淡出」的日志。 */
+    private static boolean fadeStarted;
+
     /**
      * 常驻聊天栏的可见度：最后一条消息（或最后一次打开聊天）之后先保持
      * {@code hudFadeDelayTicks}，再用 {@code hudFadeTicks} 线性淡出到 0。
-     * 打开聊天、收到新消息都会重置计时，所以按 T 唤出时立刻恢复满不透明度。
+     * 用墙钟毫秒计时（1 tick = 50ms），不受客户端 tick 源异常影响。
      */
     private static float hudFade() {
         var config = ChatWindowPlus.config();
-        int hold = config.hudFadeDelayTicks;
-        if (hold < 0) {
+        int holdTicks = config.hudFadeDelayTicks;
+        if (holdTicks < 0) {
             return 1.0F;
         }
-        int fade = Math.max(1, config.hudFadeTicks);
-        int elapsed = ChatWindowPlus.ticks() - ChatWindowPlus.lastActivityTick();
-        if (elapsed <= hold) {
-            return 1.0F;
+        long holdMs = holdTicks * 50L;
+        long fadeMs = Math.max(1, config.hudFadeTicks) * 50L;
+        long idle = ChatWindowPlus.idleMillis();
+        float result;
+        if (idle <= holdMs) {
+            fadeStarted = false;
+            result = 1.0F;
+        } else if (idle >= holdMs + fadeMs) {
+            result = 0.0F;
+        } else {
+            if (!fadeStarted) {
+                fadeStarted = true;
+                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏开始淡出（空闲 {} ms，保持 {} ms）", idle, holdMs);
+            }
+            result = 1.0F - (idle - holdMs) / (float) fadeMs;
         }
-        if (elapsed >= hold + fade) {
-            return 0.0F;
-        }
-        return 1.0F - (elapsed - hold) / (float) fade;
+        return result;
     }
 
     public record Tab(ChatCategory category, int x, int y, int w, int h) {
@@ -167,7 +181,20 @@ public final class ChatWindowRenderer {
         }
         float fade = open ? 1.0F : hudFade();
         if (!open && fade <= 0.01F) {
+            if (!hudHidden) {
+                hudHidden = true;
+                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏已淡出（空闲 {} ms）", ChatWindowPlus.idleMillis());
+            }
             return;
+        }
+        hudHidden = false;
+        if (config.debugChat) {
+            long now = System.currentTimeMillis();
+            if (now - lastFadeLogMs > 1000L) {
+                lastFadeLogMs = now;
+                ChatWindowPlus.LOGGER.info("[CWP] hud open={} idle={}ms alpha={} hudEnabled={}",
+                        open, ChatWindowPlus.idleMillis(), fade, config.hudEnabled);
+            }
         }
 
         ChatLayout layout = layout(font, context.getScaledWindowWidth(), context.getScaledWindowHeight(), open);
