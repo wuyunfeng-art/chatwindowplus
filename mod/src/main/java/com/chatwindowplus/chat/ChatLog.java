@@ -10,15 +10,22 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** 已收到的聊天记录（按时间倒序保存），以及各分类的未读数。 */
 public final class ChatLog {
+    private static final Logger LOGGER = LoggerFactory.getLogger("chatwindowplus");
+
     private final Deque<ChatEntry> entries = new ArrayDeque<>();
     private final Map<ChatCategory, Integer> unread = new EnumMap<>(ChatCategory.class);
     private int nextId;
 
     public void add(Text message) {
         ChatParser.Parsed parsed = ChatParser.parse(message);
+        if (ChatWindowPlus.config().debugChat) {
+            LOGGER.info("[CWP] {} | {}", parsed.category(), parsed.plain());
+        }
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
         ChatEntry entry = new ChatEntry(

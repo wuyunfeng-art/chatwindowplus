@@ -77,6 +77,12 @@ public final class ChatWindowConfig {
 
     public boolean hudEnabled = true;
 
+    /**
+     * 调试开关：开启后每条聊天消息都会把「分类 + 原文」写进 logs/latest.log，
+     * 方便排查“私聊/世界/经济”分类没命中的问题。默认关闭。
+     */
+    public boolean debugChat = false;
+
     /** 自定义分类规则：从上到下匹配，命中即采用。pattern 为正则，category 取值见 defaultFilter。 */
     public java.util.List<Rule> rules = new java.util.ArrayList<>();
 
@@ -173,6 +179,7 @@ public final class ChatWindowConfig {
         this.maxMessages = o.maxMessages;
         this.defaultFilter = o.defaultFilter;
         this.hudEnabled = o.hudEnabled;
+        this.debugChat = o.debugChat;
         this.rules = o.rules;
     }
 

@@ -10,6 +10,10 @@ mod/run/
 # ---- 本机工具链与测试环境（体积巨大，不入库）----
 tools/
 testserver/
+.build-tmp/
+.build-out/
+.build-out2/
+.backup/
 
 # ---- 日志 ----
 *.log
