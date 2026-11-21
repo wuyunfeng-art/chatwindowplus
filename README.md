@@ -28,7 +28,7 @@
 2. **按 `F7`** 打开「聊天窗口设置」，改完点「完成」即可（也会自动保存）。
 3. 也可以打开聊天后点页签行最右侧的 **「设置」**，或者输入 **`/cwp`**。
 
-> 把 `chatwindowplus-1.0.2.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
+> 把 `chatwindowplus-1.0.3.jar` 放进整合包 `.minecraft/versions/<你的版本>/mods/` 里，
 > 换新版本后需要**重启一次游戏**才会加载。
 
 ---
@@ -167,8 +167,8 @@
 ## 四、安装 / 更新
 
 1. 游戏版本 **Fabric 1.21.11**，需要 **Fabric Loader 0.19+** 与 **Fabric API**。
-2. 下载 [`chatwindowplus-1.0.2.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.2.jar)
-   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.2.jar`）。
+2. 下载 [`chatwindowplus-1.0.3.jar`](https://github.com/wuyunfeng-art/chatwindowplus/releases/latest/download/chatwindowplus-1.0.3.jar)
+   （也可以直接用仓库里的 `dist/chatwindowplus-1.0.3.jar`）。
 3. 放进整合包的 `.minecraft/versions/<你的版本>/mods/` 目录。
 4. 重启游戏。
 
@@ -190,7 +190,7 @@
 cd mod
 $env:JAVA_HOME = "..\tools\jdk25\jdk-25"
 ..\tools\gradle-9.9.2\bin\gradle.bat build
-# 产物：build/libs/chatwindowplus-1.0.2.jar
+# 产物：build/libs/chatwindowplus-1.0.3.jar
 ```
 
 技术栈：Fabric Loom 1.19.4、Yarn 1.21.11+build.6、JDK 25 编译（字节码 21）。
@@ -213,7 +213,7 @@ mod/src/main/java/com/chatwindowplus/
   mixin/                    聊天界面 Mixin
   ui/                       渲染、主题、设置界面
 docs/                       README 用截图
-dist/                       已构建的 jar（chatwindowplus-1.0.2.jar）
+dist/                       已构建的 jar（chatwindowplus-1.0.3.jar）
 ```
 
 - 配置文件：`.minecraft/config/chatwindowplus.json`，首次启动自动生成。

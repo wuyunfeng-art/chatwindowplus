@@ -47,9 +47,23 @@ public final class ChatParser {
     private static final Pattern PRIVATE_SAY = Pattern.compile(
             "^(.{1,16}?)\\s*(?:悄悄地对你说|悄悄对你说|对你说)\\s*[:：]?\\s*(.*)$");
 
+    /**
+     * 死亡信息。各服务端会自定义死法，这里分三类兜住：
+     * <ol>
+     *   <li>“被…杀死 / 击杀 / 干掉”，名字和称号可能很长，所以放宽到 60 字</li>
+     *   <li>“用[武器]杀…”，武器名再长也能命中</li>
+     *   <li>“战斗时被…”“被烤得 / 烧得 / 冻成 …”这类自定义死法</li>
+     * </ol>
+     */
     private static final Pattern DEATH = Pattern.compile(
-            "被.{1,24}杀(死|害)|试图在熔岩里游泳|从高处摔了下来|刺死|炸死|烧死|淹死|饿死|凋零|摔死|死于|被.{0,20}击杀");
+            "被[^。！？!?]{0,60}?(?:杀死|杀害|击杀|干掉)"
+                    + "|用\\[[^\\]]{1,24}]杀"
+                    + "|战斗时被|在与[^。！？!?]{0,40}战斗"
+                    + "|试图在熔岩里游泳|从高处摔了下来|刺死|炸死|烧死|淹死|饿死|凋零|摔死|死于"
+                    + "|被[^。！？!?]{0,40}(?:烤得|烧得|冻成|电死|毒死|窒息|压成|绞死|劈死|咬死|扎死|捅死)");
     private static final Pattern JOIN_LEAVE = Pattern.compile("加入了游戏|退出了游戏|加入了服务器|离开了服务器|加入了世界|离开了世界");
+    /** 系统播报：`来自地牢的声音：…` 这类 NPC / 剧情提示。 */
+    private static final Pattern SYSTEM_BROADCAST = Pattern.compile("^来自[^：:]{1,12}的声音");
 
     private ChatParser() {
     }
@@ -232,7 +246,8 @@ public final class ChatParser {
             return tagged;
         }
 
-        if (s.startsWith("隐秘的声音") || s.startsWith("【系统】") || s.startsWith("[系统]") || s.startsWith("[公告]")) {
+        if (s.startsWith("隐秘的声音") || s.startsWith("【系统】") || s.startsWith("[系统]") || s.startsWith("[公告]")
+                || SYSTEM_BROADCAST.matcher(s).lookingAt()) {
             return ChatCategory.SYSTEM;
         }
         if (isPrivateChat(head)) {
