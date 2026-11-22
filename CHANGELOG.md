@@ -2,6 +2,15 @@
 
 本文件记录 Chat Window Plus 每个公开版本的改动。版本号与 `mod/gradle.properties` 里的 `mod_version` 一致。
 
+## 1.0.10 — 2026-11-22
+
+### 诊断
+
+- 点击未命中时也输出一行日志，带上鼠标坐标、列表区域、行数、滚动量和当前页签：
+  `[CWP] 点击未命中行: click=(x, y) list=[x,y wxh] rows=N scroll=S filter=ALL`
+- 配合 1.0.9 的入口日志 `[CWP] mouseClicked at (x, y)`，可以区分三种情况：
+  鼠标点击根本没进 mod / 进了但没落在消息行上 / 落在行上但那段文字没有点击事件
+
 ## 1.0.9 — 2026-11-22
 
 ### 变更

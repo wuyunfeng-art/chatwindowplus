@@ -592,7 +592,13 @@ public final class ChatWindowRenderer {
         List<ChatEntry> entries = ChatWindowPlus.log().filtered(filter);
         List<Row> rows = buildRows(font, entries, layout.textW());
         int index = rowIndexAt(layout, rows, mouseX, mouseY);
-        if (index >= 0) {
+        if (index < 0) {
+            ChatWindowPlus.LOGGER.info("[CWP] 点击未命中行: click=({}, {}) list=[{},{} {}x{}] rows={} scroll={} filter={}",
+                    mouseX, mouseY, layout.listX(), layout.listY(), layout.listW(), layout.listH(),
+                    rows.size(), scroll, filter);
+            return false;
+        }
+        {
             Row row = rows.get(index);
             // 1) 服务端挂的点击事件：[更改]、[修改]、玩家名跳转……
             Style style = styleAt(row.text(), font, (int) mouseX - layout.textX());
