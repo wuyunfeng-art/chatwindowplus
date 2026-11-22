@@ -24,6 +24,7 @@ public final class ChatLog {
     public void add(Text message) {
         ChatParser.Parsed parsed = ChatParser.parse(message);
         ChatCategory effective = parsed.category();
+        long idleBefore = ChatWindowPlus.idleMillis();
         ChatEntry previous = this.entries.peekFirst();
 
         // 商店控制面板这类多行区块：字段行跟着上一行走；框线只在上一行不是系统提示时才跟随，
@@ -44,6 +45,9 @@ public final class ChatLog {
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
         ChatWindowPlus.noteActivity();
+        if (idleBefore > 5000L) {
+            LOGGER.info("[CWP] 新消息重置淡出计时（此前空闲 {} ms）", idleBefore);
+        }
         Text source = message.copy();
         boolean interactive = ChatParser.hasClickEvent(source);
         ChatEntry entry = new ChatEntry(

@@ -6,13 +6,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
 
 /**
  * 把服务器发来的原始聊天文本拆成：分类、称号/区域标签、说话人、正文，
@@ -405,43 +405,23 @@ public final class ChatParser {
         return null;
     }
 
-    /** 消息树里是否带可点击事件（[更改]、[修改]、玩家名跳转等）。 */
+    /**
+     * 消息树里是否带可点击事件（[更改]、[修改]、玩家名跳转等）。
+     * 用 {@code visit} 遍历，能覆盖 {@code TranslatableText} 参数里藏的点击事件，
+     * 只查 siblings 会漏掉服务端用翻译键拼出来的按钮。
+     */
     public static boolean hasClickEvent(Text text) {
-        if (text.getStyle().getClickEvent() != null) {
-            return true;
-        }
-        for (Text sibling : text.getSiblings()) {
-            if (hasClickEvent(sibling)) {
-                return true;
-            }
-        }
-        return false;
+        return text.visit((style, asString) -> style.getClickEvent() != null
+                ? Optional.of(Boolean.TRUE)
+                : Optional.empty(), Style.EMPTY).isPresent();
     }
 
     /**
-     * 把带交互的消息原样搬过来，但清掉服务端颜色、给可点击的片段加下划线。
-     * 颜色清空是为了让渲染时统一用主题色（并且能跟着常驻栏一起淡出），
-     * 点击/悬停事件则完整保留。
+     * 把带交互的消息原样搬过来。这里不能改样式：点击事件可能挂在
+     * {@code TranslatableText} 的参数里，重建会把它弄丢，所以只做一次深拷贝。
      */
     public static MutableText themedLine(Text source) {
-        MutableText copy = source.copy();
-        applyTheme(copy);
-        return copy;
-    }
-
-    private static void applyTheme(MutableText text) {
-        Style style = text.getStyle();
-        boolean clickable = style.getClickEvent() != null;
-        style = style.withColor((TextColor) null);
-        if (clickable) {
-            style = style.withUnderline(true);
-        }
-        text.setStyle(style);
-        for (Text sibling : text.getSiblings()) {
-            if (sibling instanceof MutableText child) {
-                applyTheme(child);
-            }
-        }
+        return source.copy();
     }
 
     private static final java.util.Map<String, Pattern> RULE_CACHE = new java.util.HashMap<>();

@@ -37,6 +37,8 @@ public final class ChatWindowRenderer {
     }
 
     private static long lastFadeLogMs;
+    /** 心跳日志的上次时间。 */
+    private static long lastHeartbeatMs;
     /** 常驻栏是否已经淡出到完全隐藏，用来只在状态翻转时打一条日志。 */
     private static boolean hudHidden;
     /** 本轮是否已经打过「开始淡出」的日志。 */
@@ -192,6 +194,14 @@ public final class ChatWindowRenderer {
             return;
         }
         hudHidden = false;
+
+        // 低频心跳：排查淡出问题时能直接看到 idle 有没有增长、消息有没有一直续期
+        long heartbeatNow = System.currentTimeMillis();
+        if (heartbeatNow - lastHeartbeatMs > 10000L) {
+            lastHeartbeatMs = heartbeatNow;
+            ChatWindowPlus.LOGGER.info("[CWP] hud open={} idle={}ms alpha={} msgs={}",
+                    open, ChatWindowPlus.idleMillis(), fade, ChatWindowPlus.log().size());
+        }
         if (config.debugChat) {
             long now = System.currentTimeMillis();
             if (now - lastFadeLogMs > 1000L) {
@@ -532,8 +542,14 @@ public final class ChatWindowRenderer {
             Row row = rows.get(index);
             // 1) 服务端挂的点击事件：[更改]、[修改]、玩家名跳转……
             Style style = styleAt(row.text(), font, (int) mouseX - layout.textX());
-            if (style != null && runClick(style)) {
-                return true;
+            ClickEvent event = style == null ? null : style.getClickEvent();
+            if (event != null) {
+                ChatWindowPlus.LOGGER.info("[CWP] 点击行 {} 的事件 {}", index, event.getClass().getSimpleName());
+                if (runClick(style)) {
+                    return true;
+                }
+            } else {
+                ChatWindowPlus.LOGGER.info("[CWP] 点击行 {} 没有点击事件", index);
             }
             // 2) 纯文本里的 http(s) 链接
             String url = row.entry().firstUrl();
