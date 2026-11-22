@@ -2,6 +2,17 @@
 
 本文件记录 Chat Window Plus 每个公开版本的改动。版本号与 `mod/gradle.properties` 里的 `mod_version` 一致。
 
+## 1.0.11 — 2026-11-22
+
+### 修复
+
+- **点击改为委托原版分发**：新增 `ScreenClickInvoker`（`@Invoker` 暴露 `Screen.handleClickEvent`），
+  聊天里的点击不再自己 switch 事件类型，而是原版怎么处理就怎么处理——`run_command`、
+  `suggest_command`、`open_url`、`copy_to_clipboard`、`change_page` 以及服务端的**自定义事件**全部覆盖
+- 目标是「原版能点的这里也能点」：例如 Paletale 的玩家档案（点玩家名/头衔 → 打开档案界面）
+  由服务端下发点击事件、客户端原版逻辑分发，之前自己实现的分支漏掉了非标准事件类型
+- 已验证 `ScreenClickInvoker` 在启动时正常应用（无 mixin 报错）
+
 ## 1.0.10 — 2026-11-22
 
 ### 诊断

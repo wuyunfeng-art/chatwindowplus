@@ -9,7 +9,7 @@ import java.util.List;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.network.message.ChatVisibility;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.OrderedText;
@@ -640,30 +640,16 @@ public final class ChatWindowRenderer {
         return hit[0];
     }
 
-    /** 执行服务端的点击事件，返回是否处理了。 */
+    /** 执行服务端的点击事件：交给原版 Screen.handleClickEvent 分发（含自定义事件）。 */
     private static boolean runClick(Style style) {
         ClickEvent event = style.getClickEvent();
         if (event == null) {
             return false;
         }
         MinecraftClient client = MinecraftClient.getInstance();
-        if (event instanceof ClickEvent.RunCommand(String command)) {
-            String cmd = command.startsWith("/") ? command.substring(1) : command;
-            if (client.player != null) {
-                client.player.networkHandler.sendChatCommand(cmd);
-            }
-            return true;
-        }
-        if (event instanceof ClickEvent.SuggestCommand(String command)) {
-            client.setScreen(new ChatScreen(command, false));
-            return true;
-        }
-        if (event instanceof ClickEvent.OpenUrl(URI uri)) {
-            ChatWindowPlus.openUrl(uri.toString());
-            return true;
-        }
-        if (event instanceof ClickEvent.CopyToClipboard(String value)) {
-            client.keyboard.setClipboard(value);
+        Screen screen = client.currentScreen;
+        if (screen != null) {
+            com.chatwindowplus.mixin.ScreenClickInvoker.cwp$handleClickEvent(event, client, screen);
             return true;
         }
         return false;
