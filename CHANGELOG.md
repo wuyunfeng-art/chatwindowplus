@@ -2,6 +2,19 @@
 
 本文件记录 Chat Window Plus 每个公开版本的改动。版本号与 `mod/gradle.properties` 里的 `mod_version` 一致。
 
+## 1.0.12 — 2026-11-22
+
+### 修复
+
+- **点玩家名打开 Paletale 档案**：查明 Paletale 并不使用 `ClickEvent`，而是
+  1. 在聊天文本的样式里写入 `insertion = PREFIX + 历史消息ID` 作为标记；
+  2. 点击时用 `ChatAssist.hit(x, y)` 去问**原版 ChatHud**「这个坐标上是哪段文字」，
+     再按标记反查并打开档案。
+  本模组接管了聊天渲染，原版 ChatHud 里没有对应布局，所以它永远找不到人。
+- 现在：带 `insertion` 标记的消息不再被拆成纯文本重建（保留原始样式树），
+  点击时把当前坐标上的 `Style` 交给 Paletale 自己的 `ChatAssist.clickStyle(...)` 处理（反射调用，失败则安全跳过）
+- 原来的 `ClickEvent` 仍走原版 `Screen.handleClickEvent` 分发，两者互补
+
 ## 1.0.11 — 2026-11-22
 
 ### 修复

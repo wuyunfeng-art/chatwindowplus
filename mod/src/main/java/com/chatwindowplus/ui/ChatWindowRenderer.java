@@ -608,10 +608,16 @@ public final class ChatWindowRenderer {
                 if (runClick(style)) {
                     return true;
                 }
-            } else {
+            }
+            // 2) Paletale 这类模组用样式里的 insertion 标记识别目标，把自己的点击逻辑接上
+            if (style != null && paletaleClick(style, mouseX, mouseY)) {
+                ChatWindowPlus.LOGGER.info("[CWP] 点击行 {} 交给 Paletale 处理成功", index);
+                return true;
+            }
+            if (event == null) {
                 ChatWindowPlus.LOGGER.info("[CWP] 点击行 {} 没有点击事件", index);
             }
-            // 2) 纯文本里的 http(s) 链接
+            // 3) 纯文本里的 http(s) 链接
             String url = row.entry().firstUrl();
             if (url != null) {
                 ChatWindowPlus.openUrl(url);
@@ -638,6 +644,36 @@ public final class ChatWindowRenderer {
             return true;
         });
         return hit[0];
+    }
+
+    /** Paletale 的 ChatAssist.clickStyle 反射句柄，用它的 insertion 标记逻辑打开玩家档案。 */
+    private static java.lang.reflect.Method paletaleClickStyle;
+    private static boolean paletaleUnavailable;
+
+    private static boolean paletaleClick(Style style, double mouseX, double mouseY) {
+        if (paletaleUnavailable) {
+            return false;
+        }
+        Screen screen = MinecraftClient.getInstance().currentScreen;
+        if (screen == null) {
+            return false;
+        }
+        try {
+            if (paletaleClickStyle == null) {
+                Class<?> cls = Class.forName("cn.paletale.companion.ChatAssist");
+                paletaleClickStyle = cls.getDeclaredMethod("clickStyle", Screen.class, Style.class,
+                        double.class, double.class, int.class);
+                paletaleClickStyle.setAccessible(true);
+            }
+            Object result = paletaleClickStyle.invoke(null, screen, style, mouseX, mouseY, 0);
+            return Boolean.TRUE.equals(result);
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            paletaleUnavailable = true;
+            return false;
+        } catch (Throwable t) {
+            ChatWindowPlus.LOGGER.warn("[CWP] 调用 Paletale 点击处理失败: {}", t.toString());
+            return false;
+        }
     }
 
     /** 执行服务端的点击事件：交给原版 Screen.handleClickEvent 分发（含自定义事件）。 */

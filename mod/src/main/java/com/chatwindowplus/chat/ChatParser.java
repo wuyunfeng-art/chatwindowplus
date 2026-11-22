@@ -406,14 +406,19 @@ public final class ChatParser {
     }
 
     /**
-     * 消息树里是否带可点击事件（[更改]、[修改]、玩家名跳转等）。
-     * 用 {@code visit} 遍历，能覆盖 {@code TranslatableText} 参数里藏的点击事件，
-     * 只查 siblings 会漏掉服务端用翻译键拼出来的按钮。
+     * 消息树里是否带「可交互」样式：点击事件，或者 Paletale 这类模组用的 insertion 标记
+     * （它们在样式里塞 `PREFIX+消息ID`，靠点击时的样式反查目标）。
+     * 用 {@code visit} 遍历，能覆盖 {@code TranslatableText} 参数里的样式。
      */
-    public static boolean hasClickEvent(Text text) {
-        return text.visit((style, asString) -> style.getClickEvent() != null
+    public static boolean hasInteractiveStyle(Text text) {
+        return text.visit((style, asString) -> style.getClickEvent() != null || style.getInsertion() != null
                 ? Optional.of(Boolean.TRUE)
                 : Optional.empty(), Style.EMPTY).isPresent();
+    }
+
+    /** 兼容旧调用。 */
+    public static boolean hasClickEvent(Text text) {
+        return hasInteractiveStyle(text);
     }
 
     /**
