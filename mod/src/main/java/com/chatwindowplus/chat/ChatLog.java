@@ -44,10 +44,13 @@ public final class ChatLog {
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
         ChatWindowPlus.noteActivity();
+        Text source = message.copy();
+        boolean interactive = ChatParser.hasClickEvent(source);
         ChatEntry entry = new ChatEntry(
                 this.nextId++,
                 effective,
-                parsed.line(),
+                interactive ? ChatParser.themedLine(source) : parsed.line(),
+                source,
                 parsed.plain(),
                 parsed.sender() == null ? "" : parsed.sender(),
                 parsed.body() == null ? parsed.plain() : parsed.body(),
@@ -73,7 +76,11 @@ public final class ChatLog {
     /** 重新生成所有消息的富文本（改文字颜色后调用）。 */
     public void rebuildAll() {
         for (ChatEntry entry : this.entries) {
-            entry.refreshLine(ChatParser.buildLine(entry.sender(), entry.tags(), entry.body()));
+            if (entry.source() != null && ChatParser.hasClickEvent(entry.source())) {
+                entry.refreshLine(ChatParser.themedLine(entry.source()));
+            } else {
+                entry.refreshLine(ChatParser.buildLine(entry.sender(), entry.tags(), entry.body()));
+            }
         }
     }
 

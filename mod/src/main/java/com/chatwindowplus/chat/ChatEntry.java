@@ -12,6 +12,8 @@ import net.minecraft.text.Text;
 public final class ChatEntry {
     private ChatCategory category;
     private Text line;
+    /** 服务器发来的原始富文本，用来在重建时保留点击/悬停事件。 */
+    private final Text source;
     private final String plain;
     private final String sender;
     private final String body;
@@ -23,11 +25,12 @@ public final class ChatEntry {
     private List<OrderedText> wrapped;
     private int wrappedWidth = -1;
 
-    public ChatEntry(int id, ChatCategory category, Text line, String plain, String sender, String body,
+    public ChatEntry(int id, ChatCategory category, Text line, Text source, String plain, String sender, String body,
                      List<String> tags, long createdAt, int tick) {
         this.id = id;
         this.category = category;
         this.line = line;
+        this.source = source;
         this.plain = plain;
         this.sender = sender;
         this.body = body;
@@ -53,6 +56,10 @@ public final class ChatEntry {
 
     public Text line() {
         return this.line;
+    }
+
+    public Text source() {
+        return this.source;
     }
 
     public String plain() {

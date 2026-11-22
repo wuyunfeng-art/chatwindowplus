@@ -3,13 +3,17 @@ package com.chatwindowplus.ui;
 import com.chatwindowplus.ChatWindowPlus;
 import com.chatwindowplus.chat.ChatCategory;
 import com.chatwindowplus.chat.ChatEntry;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.network.message.ChatVisibility;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
@@ -525,11 +529,66 @@ public final class ChatWindowRenderer {
         List<Row> rows = buildRows(font, entries, layout.textW());
         int index = rowIndexAt(layout, rows, mouseX, mouseY);
         if (index >= 0) {
-            String url = rows.get(index).entry().firstUrl();
+            Row row = rows.get(index);
+            // 1) 服务端挂的点击事件：[更改]、[修改]、玩家名跳转……
+            Style style = styleAt(row.text(), font, (int) mouseX - layout.textX());
+            if (style != null && runClick(style)) {
+                return true;
+            }
+            // 2) 纯文本里的 http(s) 链接
+            String url = row.entry().firstUrl();
             if (url != null) {
                 ChatWindowPlus.openUrl(url);
                 return true;
             }
+        }
+        return false;
+    }
+
+    /** 按字符宽度累加，找出鼠标横坐标落在哪个样式上。 */
+    private static Style styleAt(OrderedText text, TextRenderer font, int offsetX) {
+        if (offsetX < 0) {
+            return null;
+        }
+        int[] width = {0};
+        Style[] hit = {null};
+        text.accept((index, style, codePoint) -> {
+            int advance = font.getWidth(new String(Character.toChars(codePoint)));
+            if (offsetX < width[0] + advance) {
+                hit[0] = style;
+                return false;
+            }
+            width[0] += advance;
+            return true;
+        });
+        return hit[0];
+    }
+
+    /** 执行服务端的点击事件，返回是否处理了。 */
+    private static boolean runClick(Style style) {
+        ClickEvent event = style.getClickEvent();
+        if (event == null) {
+            return false;
+        }
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (event instanceof ClickEvent.RunCommand(String command)) {
+            String cmd = command.startsWith("/") ? command.substring(1) : command;
+            if (client.player != null) {
+                client.player.networkHandler.sendChatCommand(cmd);
+            }
+            return true;
+        }
+        if (event instanceof ClickEvent.SuggestCommand(String command)) {
+            client.setScreen(new ChatScreen(command, false));
+            return true;
+        }
+        if (event instanceof ClickEvent.OpenUrl(URI uri)) {
+            ChatWindowPlus.openUrl(uri.toString());
+            return true;
+        }
+        if (event instanceof ClickEvent.CopyToClipboard(String value)) {
+            client.keyboard.setClipboard(value);
+            return true;
         }
         return false;
     }
