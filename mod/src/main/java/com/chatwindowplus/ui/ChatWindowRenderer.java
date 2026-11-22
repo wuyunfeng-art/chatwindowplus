@@ -39,6 +39,12 @@ public final class ChatWindowRenderer {
     private static long lastFadeLogMs;
     /** 心跳日志的上次时间。 */
     private static long lastHeartbeatMs;
+    /** 关闭聊天窗口的时刻（-1 = 聊天开着或还没关过）。方案 B：计时从这一刻开始，新消息不续期。 */
+    private static long chatClosedAtMs = -1L;
+    /** 隐藏状态下新消息的短暂高亮结束时刻。 */
+    private static long flashUntilMs;
+    /** 上次高亮的时间，用来限频。 */
+    private static long lastFlashAtMs;
     /** 常驻栏是否已经淡出到完全隐藏，用来只在状态翻转时打一条日志。 */
     private static boolean hudHidden;
     /** 本轮是否已经打过「开始淡出」的日志。 */
@@ -57,21 +63,66 @@ public final class ChatWindowRenderer {
         }
         long holdMs = holdTicks * 50L;
         long fadeMs = Math.max(1, config.hudFadeTicks) * 50L;
-        long idle = ChatWindowPlus.idleMillis();
+        long now = System.currentTimeMillis();
+        if (chatClosedAtMs < 0L) {
+            chatClosedAtMs = now;
+        }
+        long elapsed = now - chatClosedAtMs;
+
         float result;
-        if (idle <= holdMs) {
+        if (elapsed <= holdMs) {
             fadeStarted = false;
             result = 1.0F;
-        } else if (idle >= holdMs + fadeMs) {
+        } else if (elapsed >= holdMs + fadeMs) {
             result = 0.0F;
         } else {
             if (!fadeStarted) {
                 fadeStarted = true;
-                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏开始淡出（空闲 {} ms，保持 {} ms）", idle, holdMs);
+                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏开始淡出（关闭聊天 {} ms，保持 {} ms）", elapsed, holdMs);
             }
-            result = 1.0F - (idle - holdMs) / (float) fadeMs;
+            result = 1.0F - (elapsed - holdMs) / (float) fadeMs;
+        }
+
+        // 方案 B：隐藏状态下收到新消息，短暂亮一下再继续淡（限频，避免刷屏服务器一直亮着）
+        if (now < flashUntilMs && result < 1.0F) {
+            result = 1.0F;
         }
         return result;
+    }
+
+    /** 聊天窗口被打开：立刻恢复满透明度，并暂停计时。 */
+    public static void onChatOpened() {
+        chatClosedAtMs = -1L;
+        flashUntilMs = 0L;
+        hudHidden = false;
+        fadeStarted = false;
+    }
+
+    /** 聊天窗口关闭：从这里开始计时。 */
+    public static void onChatClosed() {
+        chatClosedAtMs = System.currentTimeMillis();
+    }
+
+    /** 新消息到达：只在已经淡出（或正在淡）时触发一次短暂高亮。 */
+    public static void onChatMessage() {
+        var config = ChatWindowPlus.config();
+        if (chatClosedAtMs < 0L || config.hudFadeDelayTicks < 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long holdMs = config.hudFadeDelayTicks * 50L;
+        if (now - chatClosedAtMs < holdMs) {
+            return;
+        }
+        if (now - lastFlashAtMs < 3000L) {
+            return;
+        }
+        int flashTicks = Math.max(0, config.hudFlashTicks);
+        if (flashTicks <= 0) {
+            return;
+        }
+        lastFlashAtMs = now;
+        flashUntilMs = now + flashTicks * 50L;
     }
 
     public record Tab(ChatCategory category, int x, int y, int w, int h) {
@@ -184,6 +235,7 @@ public final class ChatWindowRenderer {
         // 打开聊天时每一帧都在续期；关闭后交给 hudFade 决定“保持 → 淡出 → 隐藏”
         if (open) {
             ChatWindowPlus.noteActivity();
+            onChatOpened();
         }
         float fade = open ? 1.0F : hudFade();
         if (!open && fade <= 0.01F) {
@@ -199,8 +251,9 @@ public final class ChatWindowRenderer {
         long heartbeatNow = System.currentTimeMillis();
         if (heartbeatNow - lastHeartbeatMs > 10000L) {
             lastHeartbeatMs = heartbeatNow;
-            ChatWindowPlus.LOGGER.info("[CWP] hud open={} idle={}ms alpha={} msgs={}",
-                    open, ChatWindowPlus.idleMillis(), fade, ChatWindowPlus.log().size());
+            long closedFor = chatClosedAtMs < 0L ? -1L : heartbeatNow - chatClosedAtMs;
+            ChatWindowPlus.LOGGER.info("[CWP] hud open={} closedFor={}ms alpha={} msgs={}",
+                    open, closedFor, fade, ChatWindowPlus.log().size());
         }
         if (config.debugChat) {
             long now = System.currentTimeMillis();
@@ -523,6 +576,7 @@ public final class ChatWindowRenderer {
     }
 
     public static boolean handleClick(double mouseX, double mouseY, TextRenderer font, int screenW, int screenH) {
+        ChatWindowPlus.LOGGER.info("[CWP] mouseClicked at ({}, {})", mouseX, mouseY);
         ChatLayout layout = layout(font, screenW, screenH, true);
         if (ChatWindowPlus.config().showTabs && inRect(mouseX, mouseY, settingsRect(layout))) {
             MinecraftClient client = MinecraftClient.getInstance();

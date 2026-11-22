@@ -2,6 +2,21 @@
 
 本文件记录 Chat Window Plus 每个公开版本的改动。版本号与 `mod/gradle.properties` 里的 `mod_version` 一致。
 
+## 1.0.9 — 2026-11-22
+
+### 变更
+
+- **淡出改成方案 B**：计时从「关闭聊天窗口」开始，**新消息不再续期**。
+  10 秒后开始 2 秒淡出，之后保持隐藏；按 `T` 打开聊天立即恢复。
+  已淡出时收到新消息只**短暂亮起** `hudFlashTicks`（默认 24 tick ≈ 1.2 秒，同一时刻最多 3 秒一次），随后继续隐藏
+- 新增配置 `hudFlashTicks`（`0` = 新消息也不亮）
+- 关闭聊天窗口（`Esc` / 发送后自动关闭）通过 `ChatScreen.removed()` 记录起点，打开时清零
+
+### 诊断
+
+- `handleClick` 入口加日志：`[CWP] mouseClicked at (x, y)`，用来确认点击有没有进到 mod 的处理函数
+- 本地模拟点击验证通过：`mouseClicked at (49.0, 379.5)` → `点击行 33 的事件 RunCommand`
+
 ## 1.0.8 — 2026-11-22
 
 ### 修复

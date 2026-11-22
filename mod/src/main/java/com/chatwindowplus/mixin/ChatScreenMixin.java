@@ -50,11 +50,18 @@ public abstract class ChatScreenMixin {
     @Inject(method = "init", at = @At("TAIL"))
     private void chatwindowplus$layout(CallbackInfo ci) {
         ChatWindowPlus.reloadIfChanged();
+        ChatWindowRenderer.onChatOpened();
         if (!ChatWindowPlus.config().enabled || this.chatField == null) {
             return;
         }
         ChatWindowRenderer.resetScroll();
         placeField();
+    }
+
+    /** 关闭聊天窗口（Esc / 发送后自动关闭）时开始计时，常驻栏据此淡出。 */
+    @Inject(method = "removed", at = @At("HEAD"))
+    private void chatwindowplus$removed(CallbackInfo ci) {
+        ChatWindowRenderer.onChatClosed();
     }
 
     private void placeField() {

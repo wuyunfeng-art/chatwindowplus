@@ -45,8 +45,9 @@ public final class ChatLog {
         MinecraftClient client = MinecraftClient.getInstance();
         int tick = client.inGameHud != null ? client.inGameHud.getTicks() : 0;
         ChatWindowPlus.noteActivity();
+        com.chatwindowplus.ui.ChatWindowRenderer.onChatMessage();
         if (idleBefore > 5000L) {
-            LOGGER.info("[CWP] 新消息重置淡出计时（此前空闲 {} ms）", idleBefore);
+            LOGGER.info("[CWP] 新消息（此前空闲 {} ms）", idleBefore);
         }
         Text source = message.copy();
         boolean interactive = ChatParser.hasClickEvent(source);

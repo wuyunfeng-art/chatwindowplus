@@ -37,6 +37,11 @@ public final class ChatWindowConfig {
     public int hudFadeDelayTicks = 200;
     /** 淡出过程持续的 tick 数，40 tick = 2 秒。 */
     public int hudFadeTicks = 40;
+    /**
+     * 方案 B：常驻栏已经淡出时，收到新消息短暂亮起的时长（tick，20 = 1 秒；0 = 不亮）。
+     * 新消息不会延长保持时间，只会亮一下。
+     */
+    public int hudFlashTicks = 24;
     /** 打开聊天时最多展示的行数。 */
     public int openMaxLines = 40;
 
@@ -165,6 +170,7 @@ public final class ChatWindowConfig {
         this.hudMaxLines = o.hudMaxLines;
         this.hudFadeDelayTicks = o.hudFadeDelayTicks;
         this.hudFadeTicks = o.hudFadeTicks;
+        this.hudFlashTicks = o.hudFlashTicks;
         this.openMaxLines = o.openMaxLines;
         this.openHeightRatio = o.openHeightRatio;
         this.hudPanelOpacity = o.hudPanelOpacity;
