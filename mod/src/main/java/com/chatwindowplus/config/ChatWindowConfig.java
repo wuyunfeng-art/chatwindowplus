@@ -38,10 +38,10 @@ public final class ChatWindowConfig {
     /** 淡出过程持续的 tick 数，40 tick = 2 秒。 */
     public int hudFadeTicks = 40;
     /**
-     * 方案 B：常驻栏已经淡出时，收到新消息短暂亮起的时长（tick，20 = 1 秒；0 = 不亮）。
-     * 新消息不会延长保持时间，只会亮一下。
+     * 旧版方案 B 的「新消息短暂亮起」时长，现在已经不生效（新消息直接重新计时），
+     * 保留字段只为兼容旧配置文件。
      */
-    public int hudFlashTicks = 24;
+    public int hudFlashTicks = 0;
     /** 打开聊天时最多展示的行数。 */
     public int openMaxLines = 40;
 

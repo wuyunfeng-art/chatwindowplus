@@ -39,21 +39,19 @@ public final class ChatWindowRenderer {
     private static long lastFadeLogMs;
     /** 心跳日志的上次时间。 */
     private static long lastHeartbeatMs;
-    /** 关闭聊天窗口的时刻（-1 = 聊天开着或还没关过）。方案 B：计时从这一刻开始，新消息不续期。 */
-    private static long chatClosedAtMs = -1L;
-    /** 隐藏状态下新消息的短暂高亮结束时刻。 */
-    private static long flashUntilMs;
-    /** 上次高亮的时间，用来限频。 */
-    private static long lastFlashAtMs;
+    /** 从隐藏恢复显示的时刻，用来做 0.3 秒的淡入，避免“跳一下”的硬切观感。 */
+    private static long revealStartedMs;
     /** 常驻栏是否已经淡出到完全隐藏，用来只在状态翻转时打一条日志。 */
     private static boolean hudHidden;
     /** 本轮是否已经打过「开始淡出」的日志。 */
     private static boolean fadeStarted;
 
+    /** 从隐藏恢复显示时的淡入时长（毫秒）。 */
+    private static final long REVEAL_MS = 300L;
+
     /**
-     * 常驻聊天栏的可见度：最后一条消息（或最后一次打开聊天）之后先保持
-     * {@code hudFadeDelayTicks}，再用 {@code hudFadeTicks} 线性淡出到 0。
-     * 用墙钟毫秒计时（1 tick = 50ms），不受客户端 tick 源异常影响。
+     * 常驻聊天栏的可见度：最后一条消息 / 关闭聊天之后先保持 {@code hudFadeDelayTicks}，
+     * 再用 {@code hudFadeTicks} 线性淡出到 0。新消息会重新计时（方案 A）。
      */
     private static float hudFade() {
         var config = ChatWindowPlus.config();
@@ -63,66 +61,39 @@ public final class ChatWindowRenderer {
         }
         long holdMs = holdTicks * 50L;
         long fadeMs = Math.max(1, config.hudFadeTicks) * 50L;
-        long now = System.currentTimeMillis();
-        if (chatClosedAtMs < 0L) {
-            chatClosedAtMs = now;
-        }
-        long elapsed = now - chatClosedAtMs;
-
+        long idle = ChatWindowPlus.idleMillis();
         float result;
-        if (elapsed <= holdMs) {
+        if (idle <= holdMs) {
             fadeStarted = false;
             result = 1.0F;
-        } else if (elapsed >= holdMs + fadeMs) {
+        } else if (idle >= holdMs + fadeMs) {
             result = 0.0F;
         } else {
             if (!fadeStarted) {
                 fadeStarted = true;
-                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏开始淡出（关闭聊天 {} ms，保持 {} ms）", elapsed, holdMs);
+                ChatWindowPlus.LOGGER.info("[CWP] 常驻聊天栏开始淡出（空闲 {} ms，保持 {} ms）", idle, holdMs);
             }
-            result = 1.0F - (elapsed - holdMs) / (float) fadeMs;
-        }
-
-        // 方案 B：隐藏状态下收到新消息，短暂亮一下再继续淡（限频，避免刷屏服务器一直亮着）
-        if (now < flashUntilMs && result < 1.0F) {
-            result = 1.0F;
+            result = 1.0F - (idle - holdMs) / (float) fadeMs;
         }
         return result;
     }
 
-    /** 聊天窗口被打开：立刻恢复满透明度，并暂停计时。 */
+    /** 聊天窗口被打开：立刻恢复满透明度，并续期。 */
     public static void onChatOpened() {
-        chatClosedAtMs = -1L;
-        flashUntilMs = 0L;
+        ChatWindowPlus.noteActivity();
         hudHidden = false;
         fadeStarted = false;
+        revealStartedMs = 0L;
     }
 
-    /** 聊天窗口关闭：从这里开始计时。 */
+    /** 聊天窗口关闭：重新开始计时。 */
     public static void onChatClosed() {
-        chatClosedAtMs = System.currentTimeMillis();
+        ChatWindowPlus.noteActivity();
     }
 
-    /** 新消息到达：只在已经淡出（或正在淡）时触发一次短暂高亮。 */
+    /** 新消息到达：重新计时。 */
     public static void onChatMessage() {
-        var config = ChatWindowPlus.config();
-        if (chatClosedAtMs < 0L || config.hudFadeDelayTicks < 0) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        long holdMs = config.hudFadeDelayTicks * 50L;
-        if (now - chatClosedAtMs < holdMs) {
-            return;
-        }
-        if (now - lastFlashAtMs < 3000L) {
-            return;
-        }
-        int flashTicks = Math.max(0, config.hudFlashTicks);
-        if (flashTicks <= 0) {
-            return;
-        }
-        lastFlashAtMs = now;
-        flashUntilMs = now + flashTicks * 50L;
+        ChatWindowPlus.noteActivity();
     }
 
     public record Tab(ChatCategory category, int x, int y, int w, int h) {
@@ -238,6 +209,7 @@ public final class ChatWindowRenderer {
             onChatOpened();
         }
         float fade = open ? 1.0F : hudFade();
+        long nowMs = System.currentTimeMillis();
         if (!open && fade <= 0.01F) {
             if (!hudHidden) {
                 hudHidden = true;
@@ -245,15 +217,21 @@ public final class ChatWindowRenderer {
             }
             return;
         }
-        hudHidden = false;
+        if (hudHidden) {
+            // 从完全隐藏恢复：记下时刻，接下来 0.3 秒淡入，避免“跳一下”
+            hudHidden = false;
+            revealStartedMs = nowMs;
+        }
+        if (!open && revealStartedMs > 0L && nowMs - revealStartedMs < REVEAL_MS) {
+            fade = Math.min(fade, (nowMs - revealStartedMs) / (float) REVEAL_MS);
+        }
 
         // 低频心跳：排查淡出问题时能直接看到 idle 有没有增长、消息有没有一直续期
-        long heartbeatNow = System.currentTimeMillis();
+        long heartbeatNow = nowMs;
         if (heartbeatNow - lastHeartbeatMs > 10000L) {
             lastHeartbeatMs = heartbeatNow;
-            long closedFor = chatClosedAtMs < 0L ? -1L : heartbeatNow - chatClosedAtMs;
-            ChatWindowPlus.LOGGER.info("[CWP] hud open={} closedFor={}ms alpha={} msgs={}",
-                    open, closedFor, fade, ChatWindowPlus.log().size());
+            ChatWindowPlus.LOGGER.info("[CWP] hud open={} idle={}ms alpha={} msgs={}",
+                    open, ChatWindowPlus.idleMillis(), fade, ChatWindowPlus.log().size());
         }
         if (config.debugChat) {
             long now = System.currentTimeMillis();
