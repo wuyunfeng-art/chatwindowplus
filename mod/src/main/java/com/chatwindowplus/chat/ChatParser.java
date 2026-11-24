@@ -66,7 +66,8 @@ public final class ChatParser {
     /** 经济频道关键词：出现在前 48 字里就算经济，覆盖商店面板里的裸文本行。 */
     private static final String[] ECONOMY_WORDS = {
             "商店", "价格", "出售", "收购", "叫卖", "上架", "摆摊", "库存", "单价", "总价", "折扣", "优惠", "余额",
-            "物品预览", "空间", "共售", "售价"
+            "物品预览", "空间", "共售", "售价",
+            "购买", "支付", "付款", "订单", "费用", "价钱"
     };
     /** 金额写法：`$550`、`￥1,200` 之类。 */
     private static final Pattern MONEY = Pattern.compile("[$￥¥]\\s*\\d");
