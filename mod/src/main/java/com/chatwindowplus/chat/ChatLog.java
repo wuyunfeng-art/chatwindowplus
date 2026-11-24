@@ -31,10 +31,10 @@ public final class ChatLog {
 // 这样面板顶部的框线会留给下面的标题行来回填。
         if (effective == ChatCategory.OTHER && previous != null) {
             ChatCategory prev = previous.category();
-            if (prev != ChatCategory.OTHER) {
+            if (prev != ChatCategory.OTHER && prev != ChatCategory.SYSTEM) {
                 if (ChatParser.isPanelLabel(parsed.plain())) {
                     effective = prev;
-                } else if (ChatParser.isPanelSeparator(parsed.plain()) && prev != ChatCategory.SYSTEM) {
+                } else if (ChatParser.isPanelSeparator(parsed.plain())) {
                     effective = prev;
                 }
             }
@@ -64,9 +64,9 @@ public final class ChatLog {
                 tick);
         this.entries.addFirst(entry);
 
-        // 面板顶部的框线在标题出现时还不知道属于哪个分类，这里回填一下。
+        // 面板顶部的框线/首行标签在标题出现时还不知道属于哪个分类，这里回填一下。
         if (effective != ChatCategory.OTHER && previous != null && previous.category() == ChatCategory.OTHER
-                && ChatParser.isPanelSeparator(previous.plain())) {
+                && (ChatParser.isPanelSeparator(previous.plain()) || ChatParser.isPanelLabel(previous.plain()))) {
             previous.setCategory(effective);
         }
         int limit = Math.max(50, ChatWindowPlus.config().maxMessages);

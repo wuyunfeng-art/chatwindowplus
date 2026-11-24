@@ -57,16 +57,21 @@ public final class ChatParser {
      *   <li>“战斗时被…”“被烤得 / 烧得 / 冻成 …”这类自定义死法</li>
      * </ol>
      */
-    /** 商店/拍卖这类控制面板的续行标签，例如「所有者：」「价格：」「商店模式：」。 */
+    /** 商店/拍卖这类控制面板的续行标签，例如「所有者：」「价格：」「物品：」。 */
     private static final Pattern PANEL_LABEL = Pattern.compile(
-            "^(所有者|拥有者|商店模式|模式|价格|单价|总价|数量|库存|余额|位置|坐标|类型|描述|状态|有效期|剩余|折扣|商品|名称|权限|成员|创建时间)\\s*[:：]");
+            "^(所有者|拥有者|商店模式|模式|价格|单价|总价|数量|库存|余额|位置|坐标|类型|描述|状态|有效期|剩余|折扣|商品|名称|权限|成员|创建时间|物品|空间|预览|出售|收购)\\s*[:：]");
     /** 面板边框线：+-----+、======、│ │ 之类。 */
     private static final Pattern PANEL_SEPARATOR = Pattern.compile(
             "^[\\s+\\-=_─│|┌┐└┘├┤┬┴┼╔╗╚╝║╠╣╦╩╬~]{3,}$");
     /** 经济频道关键词：出现在前 48 字里就算经济，覆盖商店面板里的裸文本行。 */
     private static final String[] ECONOMY_WORDS = {
-            "商店", "价格", "出售", "收购", "叫卖", "上架", "摆摊", "库存", "单价", "总价", "折扣", "优惠", "余额"
+            "商店", "价格", "出售", "收购", "叫卖", "上架", "摆摊", "库存", "单价", "总价", "折扣", "优惠", "余额",
+            "物品预览", "空间", "共售", "售价"
     };
+    /** 金额写法：`$550`、`￥1,200` 之类。 */
+    private static final Pattern MONEY = Pattern.compile("[$￥¥]\\s*\\d");
+    /** 面板行前面的框线：`| 所有者：`、`│ 物品：`。 */
+    private static final Pattern PANEL_EDGE = Pattern.compile("^[\\s|│┃┆║]+");
 
     private static final Pattern DEATH = Pattern.compile(
             "被[^。！？!?]{0,60}?(?:杀死|杀害|击杀|干掉)"
@@ -285,9 +290,14 @@ public final class ChatParser {
         return ChatCategory.OTHER;
     }
 
-    /** 面板字段行（「所有者：」「价格：」这类），通常会跟着上一行同属一个分类。 */
+    /** 面板字段行（「所有者：」「物品：」这类）。 */
     public static boolean isPanelLabel(String plain) {
-        return PANEL_LABEL.matcher(plain.trim()).find();
+        return PANEL_LABEL.matcher(panelBody(plain)).find();
+    }
+
+    /** 去掉面板行前面的框线与空白，`| 所有者：` → `所有者：`。 */
+    private static String panelBody(String plain) {
+        return PANEL_EDGE.matcher(plain).replaceFirst("").trim();
     }
 
     /** 商店控制面板这类多行区块的续行（字段行或边框线）。 */
@@ -306,7 +316,7 @@ public final class ChatParser {
                 return true;
             }
         }
-        return false;
+        return MONEY.matcher(head).find();
     }
 
     /**
